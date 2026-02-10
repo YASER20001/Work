@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P&amp;ID Vision Analyzer</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <h1>P&amp;ID Vision Analyzer</h1>
+            <p class="subtitle">11-Phase Expert Analysis powered by Gemini Vision AI</p>
+        </div>
+    </header>
+
+    <main>
+        <!-- Upload Section -->
+        <section id="upload-section" class="card">
+            <h2>Upload P&amp;ID</h2>
+            <div id="drop-zone" class="drop-zone">
+                <div class="drop-zone-content">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <p>Drag &amp; drop your P&amp;ID file here</p>
+                    <p class="hint">PDF, PNG, JPG, or WEBP</p>
+                    <button id="browse-btn" class="btn btn-secondary">Browse Files</button>
+                </div>
+                <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.webp" hidden>
+            </div>
+            <div id="file-info" class="file-info hidden">
+                <span id="file-name"></span>
+                <button id="remove-file" class="btn-icon" title="Remove file">&times;</button>
+            </div>
+            <button id="analyze-btn" class="btn btn-primary hidden">Start 11-Phase Analysis</button>
+        </section>
+
+        <!-- Progress Section -->
+        <section id="progress-section" class="card hidden">
+            <h2>Analysis Progress</h2>
+            <div class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
+            </div>
+            <p id="progress-text" class="progress-text">Initializing...</p>
+            <div id="phase-list" class="phase-list">
+                <div class="phase-item" data-phase="1"><span class="phase-dot"></span>Phase 1: Document Context</div>
+                <div class="phase-item" data-phase="2"><span class="phase-dot"></span>Phase 2: Legend &amp; Symbols</div>
+                <div class="phase-item" data-phase="3"><span class="phase-dot"></span>Phase 3: Notes Extraction</div>
+                <div class="phase-item" data-phase="4"><span class="phase-dot"></span>Phase 4: Equipment Scan</div>
+                <div class="phase-item" data-phase="5"><span class="phase-dot"></span>Phase 5: Valve Analysis</div>
+                <div class="phase-item" data-phase="6"><span class="phase-dot"></span>Phase 6: Instrumentation</div>
+                <div class="phase-item" data-phase="7"><span class="phase-dot"></span>Phase 7: Piping Analysis</div>
+                <div class="phase-item" data-phase="8"><span class="phase-dot"></span>Phase 8: Connections &amp; Flow</div>
+                <div class="phase-item" data-phase="9"><span class="phase-dot"></span>Phase 9: Safety Analysis</div>
+                <div class="phase-item" data-phase="10"><span class="phase-dot"></span>Phase 10: Verification Summary</div>
+                <div class="phase-item" data-phase="11"><span class="phase-dot"></span>Phase 11: Re-verification</div>
+            </div>
+        </section>
+
+        <!-- Statistics Dashboard -->
+        <section id="stats-section" class="card hidden">
+            <h2>Analysis Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-equipment">0</div>
+                    <div class="stat-label">Equipment</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-valves">0</div>
+                    <div class="stat-label">Valves</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-instruments">0</div>
+                    <div class="stat-label">Instruments</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-lines">0</div>
+                    <div class="stat-label">Piping Lines</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-notes">0</div>
+                    <div class="stat-label">Notes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-confidence">0%</div>
+                    <div class="stat-label">Confidence</div>
+                </div>
+            </div>
+            <button id="export-btn" class="btn btn-secondary">Export JSON</button>
+        </section>
+
+        <!-- Results Section -->
+        <section id="results-section" class="card hidden">
+            <h2>Detailed Results</h2>
+            <div id="results-accordion" class="accordion"></div>
+        </section>
+
+        <!-- Chat Section -->
+        <section id="chat-section" class="card hidden">
+            <h2>Ask About This P&amp;ID</h2>
+            <div id="chat-messages" class="chat-messages"></div>
+            <form id="chat-form" class="chat-form">
+                <input type="text" id="chat-input" placeholder="e.g. How many control valves are there?" autocomplete="off">
+                <button type="submit" class="btn btn-primary">Ask</button>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>P&amp;ID Vision Analyzer v2.0 &mdash; Gemini 2.5 Flash Vision AI &mdash; ISA-5.1 Compliant</p>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
