@@ -170,6 +170,12 @@
       statsSection.classList.remove("hidden");
       resultsSection.classList.remove("hidden");
       chatSection.classList.remove("hidden");
+
+      // Wire executive dashboard
+      window._pidSessionId = sessionId;
+      if (typeof window.renderDashboard === "function") {
+        window.renderDashboard(data);
+      }
     } catch (err) {
       alert("Failed to load results: " + err.message);
     }

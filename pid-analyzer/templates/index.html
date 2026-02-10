@@ -60,42 +60,262 @@
             </div>
         </section>
 
-        <!-- Statistics Dashboard -->
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <!-- EXECUTIVE DASHBOARD - KBR STYLE                              -->
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <section id="dashboard-section" class="hidden">
+
+            <!-- Dashboard Header Bar -->
+            <div class="db-header">
+                <div class="db-header-left">
+                    <div class="db-logo">P&amp;ID</div>
+                    <div class="db-title-block">
+                        <h2 id="db-drawing-title">P&amp;ID Analysis Report</h2>
+                        <div class="db-meta">
+                            <span id="db-drawing-number">Drawing: --</span>
+                            <span class="db-sep">|</span>
+                            <span id="db-revision">Rev: --</span>
+                            <span class="db-sep">|</span>
+                            <span id="db-date">Date: --</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="db-header-right">
+                    <div class="db-confidence-ring">
+                        <canvas id="db-confidence-canvas" width="80" height="80"></canvas>
+                        <div class="db-confidence-label">
+                            <span id="db-confidence-value">0</span>%
+                        </div>
+                    </div>
+                    <div class="db-header-actions">
+                        <button id="db-export-btn" class="btn btn-secondary btn-sm">Export JSON</button>
+                        <button id="db-print-btn" class="btn btn-secondary btn-sm" onclick="window.print()">Print</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI Strip -->
+            <div class="db-kpi-strip">
+                <div class="db-kpi">
+                    <div class="db-kpi-icon db-kpi-blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a4 4 0 00-8 0v2"/></svg>
+                    </div>
+                    <div class="db-kpi-data">
+                        <div class="db-kpi-value" id="db-kpi-equipment">0</div>
+                        <div class="db-kpi-label">Equipment</div>
+                    </div>
+                </div>
+                <div class="db-kpi">
+                    <div class="db-kpi-icon db-kpi-indigo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4m10-10h-4M6 12H2m15.07-7.07l-2.83 2.83M9.76 14.24l-2.83 2.83m11.14 0l-2.83-2.83M9.76 9.76L6.93 6.93"/></svg>
+                    </div>
+                    <div class="db-kpi-data">
+                        <div class="db-kpi-value" id="db-kpi-valves">0</div>
+                        <div class="db-kpi-label">Valves</div>
+                    </div>
+                </div>
+                <div class="db-kpi">
+                    <div class="db-kpi-icon db-kpi-teal">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    </div>
+                    <div class="db-kpi-data">
+                        <div class="db-kpi-value" id="db-kpi-instruments">0</div>
+                        <div class="db-kpi-label">Instruments</div>
+                    </div>
+                </div>
+                <div class="db-kpi">
+                    <div class="db-kpi-icon db-kpi-amber">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16M4 15h16M4 11h16M4 7h16"/></svg>
+                    </div>
+                    <div class="db-kpi-data">
+                        <div class="db-kpi-value" id="db-kpi-lines">0</div>
+                        <div class="db-kpi-label">Piping Lines</div>
+                    </div>
+                </div>
+                <div class="db-kpi">
+                    <div class="db-kpi-icon db-kpi-red">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    </div>
+                    <div class="db-kpi-data">
+                        <div class="db-kpi-value" id="db-kpi-safety">0</div>
+                        <div class="db-kpi-label">Safety Devices</div>
+                    </div>
+                </div>
+                <div class="db-kpi">
+                    <div class="db-kpi-icon db-kpi-green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </div>
+                    <div class="db-kpi-data">
+                        <div class="db-kpi-value" id="db-kpi-notes">0</div>
+                        <div class="db-kpi-label">Eng. Notes</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Dashboard Grid -->
+            <div class="db-grid">
+
+                <!-- Design Data Panel -->
+                <div class="db-panel db-panel-design">
+                    <div class="db-panel-header">
+                        <h3>Design Data</h3>
+                    </div>
+                    <div class="db-panel-body">
+                        <table class="db-data-table" id="db-design-table">
+                            <tbody>
+                                <tr><td class="db-dt-label">Service</td><td class="db-dt-value" id="db-dd-service">--</td></tr>
+                                <tr><td class="db-dt-label">Pipeline Size</td><td class="db-dt-value" id="db-dd-size">--</td></tr>
+                                <tr><td class="db-dt-label">Design Pressure</td><td class="db-dt-value" id="db-dd-pressure">--</td></tr>
+                                <tr><td class="db-dt-label">Design Temperature</td><td class="db-dt-value" id="db-dd-temp">--</td></tr>
+                                <tr><td class="db-dt-label">MAOP</td><td class="db-dt-value" id="db-dd-maop">--</td></tr>
+                                <tr><td class="db-dt-label">Material / Grade</td><td class="db-dt-value" id="db-dd-material">--</td></tr>
+                                <tr><td class="db-dt-label">Flange Rating</td><td class="db-dt-value" id="db-dd-flange">--</td></tr>
+                                <tr><td class="db-dt-label">Design Code</td><td class="db-dt-value" id="db-dd-code">--</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Valve Breakdown Chart -->
+                <div class="db-panel db-panel-valves">
+                    <div class="db-panel-header">
+                        <h3>Valve Breakdown</h3>
+                        <span class="db-panel-badge" id="db-valve-total">0 Total</span>
+                    </div>
+                    <div class="db-panel-body db-chart-container">
+                        <canvas id="db-valve-chart" width="260" height="260"></canvas>
+                        <div id="db-valve-legend" class="db-chart-legend"></div>
+                    </div>
+                </div>
+
+                <!-- Instrument Breakdown Chart -->
+                <div class="db-panel db-panel-instruments">
+                    <div class="db-panel-header">
+                        <h3>Instrument Breakdown</h3>
+                        <span class="db-panel-badge" id="db-instrument-total">0 Total</span>
+                    </div>
+                    <div class="db-panel-body db-chart-container">
+                        <canvas id="db-instrument-chart" width="260" height="260"></canvas>
+                        <div id="db-instrument-legend" class="db-chart-legend"></div>
+                    </div>
+                </div>
+
+                <!-- Safety Status -->
+                <div class="db-panel db-panel-safety">
+                    <div class="db-panel-header">
+                        <h3>Safety &amp; Hazard Status</h3>
+                    </div>
+                    <div class="db-panel-body">
+                        <div class="db-safety-grid">
+                            <div class="db-safety-item">
+                                <div class="db-safety-indicator db-si-gas"></div>
+                                <div class="db-safety-info">
+                                    <div class="db-safety-count" id="db-sf-gas">0</div>
+                                    <div class="db-safety-label">Gas Detectors</div>
+                                </div>
+                            </div>
+                            <div class="db-safety-item">
+                                <div class="db-safety-indicator db-si-relief"></div>
+                                <div class="db-safety-info">
+                                    <div class="db-safety-count" id="db-sf-relief">0</div>
+                                    <div class="db-safety-label">Relief Devices</div>
+                                </div>
+                            </div>
+                            <div class="db-safety-item">
+                                <div class="db-safety-indicator db-si-esd"></div>
+                                <div class="db-safety-info">
+                                    <div class="db-safety-count" id="db-sf-esd">0</div>
+                                    <div class="db-safety-label">ESD Valves</div>
+                                </div>
+                            </div>
+                            <div class="db-safety-item">
+                                <div class="db-safety-indicator db-si-area"></div>
+                                <div class="db-safety-info">
+                                    <div class="db-safety-count" id="db-sf-area">--</div>
+                                    <div class="db-safety-label">Area Class.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="db-relief-table-wrapper" class="db-sub-table-wrap"></div>
+                    </div>
+                </div>
+
+                <!-- Equipment List -->
+                <div class="db-panel db-panel-equipment">
+                    <div class="db-panel-header">
+                        <h3>Equipment Register</h3>
+                        <span class="db-panel-badge" id="db-equip-total">0 Items</span>
+                    </div>
+                    <div class="db-panel-body">
+                        <div id="db-equipment-table-wrapper" class="db-sub-table-wrap"></div>
+                    </div>
+                </div>
+
+                <!-- Piping Lines -->
+                <div class="db-panel db-panel-piping">
+                    <div class="db-panel-header">
+                        <h3>Piping Line Schedule</h3>
+                        <span class="db-panel-badge" id="db-piping-total">0 Lines</span>
+                    </div>
+                    <div class="db-panel-body">
+                        <div id="db-piping-table-wrapper" class="db-sub-table-wrap"></div>
+                    </div>
+                </div>
+
+                <!-- Process Flow -->
+                <div class="db-panel db-panel-flow">
+                    <div class="db-panel-header">
+                        <h3>Process Flow Summary</h3>
+                    </div>
+                    <div class="db-panel-body">
+                        <div id="db-flow-content" class="db-flow-content"></div>
+                    </div>
+                </div>
+
+                <!-- Notes Summary -->
+                <div class="db-panel db-panel-notes">
+                    <div class="db-panel-header">
+                        <h3>Engineering Notes</h3>
+                        <span class="db-panel-badge" id="db-notes-total">0 Notes</span>
+                    </div>
+                    <div class="db-panel-body">
+                        <div id="db-notes-list" class="db-notes-list"></div>
+                    </div>
+                </div>
+
+                <!-- Reference Drawings -->
+                <div class="db-panel db-panel-refs">
+                    <div class="db-panel-header">
+                        <h3>Reference Drawings</h3>
+                    </div>
+                    <div class="db-panel-body">
+                        <div id="db-refs-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Footer -->
+            <div class="db-footer">
+                <span>Generated by P&amp;ID Vision Analyzer v2.0</span>
+                <span id="db-gen-time"></span>
+                <span>Gemini 2.5 Flash Vision AI &mdash; ISA-5.1 Compliant</span>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <!-- QUICK STATS (kept for non-dashboard view)                    -->
+        <!-- ══════════════════════════════════════════════════════════════ -->
         <section id="stats-section" class="card hidden">
             <h2>Analysis Statistics</h2>
             <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-equipment">0</div>
-                    <div class="stat-label">Equipment</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-valves">0</div>
-                    <div class="stat-label">Valves</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-instruments">0</div>
-                    <div class="stat-label">Instruments</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-lines">0</div>
-                    <div class="stat-label">Piping Lines</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-notes">0</div>
-                    <div class="stat-label">Notes</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-gas-detectors">0</div>
-                    <div class="stat-label">Gas Detectors</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-relief">0</div>
-                    <div class="stat-label">Relief Devices</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-confidence">0%</div>
-                    <div class="stat-label">Confidence</div>
-                </div>
+                <div class="stat-card"><div class="stat-value" id="stat-equipment">0</div><div class="stat-label">Equipment</div></div>
+                <div class="stat-card"><div class="stat-value" id="stat-valves">0</div><div class="stat-label">Valves</div></div>
+                <div class="stat-card"><div class="stat-value" id="stat-instruments">0</div><div class="stat-label">Instruments</div></div>
+                <div class="stat-card"><div class="stat-value" id="stat-lines">0</div><div class="stat-label">Piping Lines</div></div>
+                <div class="stat-card"><div class="stat-value" id="stat-notes">0</div><div class="stat-label">Notes</div></div>
+                <div class="stat-card"><div class="stat-value" id="stat-gas-detectors">0</div><div class="stat-label">Gas Detectors</div></div>
+                <div class="stat-card"><div class="stat-value" id="stat-relief">0</div><div class="stat-label">Relief Devices</div></div>
+                <div class="stat-card"><div class="stat-value" id="stat-confidence">0%</div><div class="stat-label">Confidence</div></div>
             </div>
             <div class="stats-actions">
                 <button id="export-btn" class="btn btn-secondary">Export JSON</button>
@@ -140,5 +360,6 @@
     </footer>
 
     <script src="/static/js/app.js"></script>
+    <script src="/static/js/dashboard.js"></script>
 </body>
 </html>
