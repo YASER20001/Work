@@ -9,7 +9,7 @@ import re
 import os
 
 GEMINI_API_KEY = os.environ.get(
-    "GEMINI_API_KEY", "AIzaSyBOeCtzpjp5LN6E2-OVlWAwgreM-DiJ58Y"
+    "GEMINI_API_KEY", "AIzaSyCKBOJHBU3f5VKxb7RdrKhD2xJ2gRUwADk"
 )
 GEMINI_VISION_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent"
 
