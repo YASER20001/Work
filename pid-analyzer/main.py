@@ -43,23 +43,74 @@ templates = Jinja2Templates(directory="templates")
 gemini_service = GeminiVisionService()
 pdf_processor = PDFProcessor()
 
-# In-memory storage for analysis sessions
 ANALYSIS_SESSIONS: Dict[str, dict] = {}
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
+# ── Helpers for deep JSON value extraction ──
+
+
+def _deep_find_int(obj, keys, default=0):
+    """
+    Search a nested dict/list for the first integer value matching any of the
+    given keys. This handles any JSON structure Gemini might return.
+    """
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            k_lower = k.lower().replace(" ", "_").replace("-", "_")
+            for target in keys:
+                if k_lower == target.lower():
+                    if isinstance(v, (int, float)):
+                        return int(v)
+                    if isinstance(v, str):
+                        try:
+                            return int(v)
+                        except ValueError:
+                            pass
+            # Recurse
+            result = _deep_find_int(v, keys, None)
+            if result is not None:
+                return result
+    elif isinstance(obj, list):
+        for item in obj:
+            result = _deep_find_int(item, keys, None)
+            if result is not None:
+                return result
+    return default
+
+
+def _deep_find_list(obj, keys):
+    """Find the first list value matching any of the given keys."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            k_lower = k.lower().replace(" ", "_").replace("-", "_")
+            for target in keys:
+                if k_lower == target.lower():
+                    if isinstance(v, list):
+                        return v
+            result = _deep_find_list(v, keys)
+            if result is not None:
+                return result
+    elif isinstance(obj, list):
+        for item in obj:
+            result = _deep_find_list(item, keys)
+            if result is not None:
+                return result
+    return None
+
+
+# ── Routes ──
+
+
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    """Render main UI."""
     return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.post("/api/upload")
 async def upload_file(file: UploadFile = File(...)):
-    """Upload P&ID file (PDF or image)."""
-
     allowed_types = [
         "application/pdf",
         "image/png",
@@ -112,8 +163,6 @@ async def upload_file(file: UploadFile = File(...)):
 
 @app.post("/api/analyze/{session_id}")
 async def start_analysis(session_id: str, background_tasks: BackgroundTasks):
-    """Start 11-phase P&ID analysis."""
-
     if session_id not in ANALYSIS_SESSIONS:
         raise HTTPException(status_code=404, detail="Session not found")
 
@@ -140,8 +189,6 @@ async def start_analysis(session_id: str, background_tasks: BackgroundTasks):
 
 
 async def run_analysis(session_id: str, image_base64: str, mime_type: str):
-    """Run the 11-phase analysis."""
-
     session = ANALYSIS_SESSIONS[session_id]
     results = {
         "phases": {},
@@ -182,13 +229,21 @@ async def run_analysis(session_id: str, image_base64: str, mime_type: str):
                 "timestamp": datetime.now().isoformat(),
             }
 
+            # Extract valve count for re-verification phase
             if phase_key == "phase5_valve_analysis":
-                context["valve_count"] = parsed.get(
-                    "GRAND TOTAL", 0
-                ) or parsed.get("total", 0)
+                vc = _deep_find_int(parsed, [
+                    "total_valve_count", "grand_total", "total",
+                    "total_valves",
+                ])
+                # Fallback: count items in valves array
+                if vc == 0:
+                    valves_list = _deep_find_list(parsed, ["valves"])
+                    if valves_list:
+                        vc = len(valves_list)
+                context["valve_count"] = vc
 
-            # Delay between phases to avoid rate limiting
-            await asyncio.sleep(1.5)
+            # Rate limit delay
+            await asyncio.sleep(2)
 
         except Exception as e:
             results["errors"].append({"phase": phase_key, "error": str(e)})
@@ -203,44 +258,117 @@ async def run_analysis(session_id: str, image_base64: str, mime_type: str):
 
 
 def extract_statistics(phases: dict) -> dict:
-    """Extract summary statistics from phase results."""
+    """
+    Extract summary statistics from phase results using deep search.
+    This handles any JSON structure Gemini returns.
+    """
     stats = {
         "equipment": 0,
         "valves": 0,
         "instruments": 0,
         "piping_lines": 0,
         "notes": 0,
+        "gas_detectors": 0,
+        "relief_devices": 0,
+        "esd_valves": 0,
     }
 
+    # ── Equipment (Phase 4) ──
     if "phase4_equipment_scan" in phases:
         r = phases["phase4_equipment_scan"].get("result", {})
-        if isinstance(r, list):
-            stats["equipment"] = len(r)
-        elif isinstance(r, dict):
-            stats["equipment"] = len(r.get("equipment", []))
+        count = _deep_find_int(r, ["total_equipment_count", "total_equipment", "total"])
+        if count == 0:
+            eq_list = _deep_find_list(r, ["equipment"])
+            if eq_list:
+                count = len(eq_list)
+        stats["equipment"] = count
 
+    # ── Valves (Phase 5) ──
     if "phase5_valve_analysis" in phases:
         r = phases["phase5_valve_analysis"].get("result", {})
-        stats["valves"] = r.get("GRAND TOTAL", 0) or r.get("total", 0)
+        count = _deep_find_int(r, [
+            "total_valve_count", "grand_total", "total_valves", "total",
+        ])
+        if count == 0:
+            v_list = _deep_find_list(r, ["valves"])
+            if v_list:
+                count = len(v_list)
+        stats["valves"] = count
 
+    # ── Instruments (Phase 6) ──
     if "phase6_instrumentation" in phases:
         r = phases["phase6_instrumentation"].get("result", {})
-        stats["instruments"] = r.get("total", 0)
+        count = _deep_find_int(r, [
+            "total_instrument_count", "total_instruments", "total",
+        ])
+        if count == 0:
+            i_list = _deep_find_list(r, ["instruments"])
+            if i_list:
+                count = len(i_list)
+        stats["instruments"] = count
 
+    # ── Piping Lines (Phase 7) ──
+    if "phase7_piping_analysis" in phases:
+        r = phases["phase7_piping_analysis"].get("result", {})
+        count = _deep_find_int(r, [
+            "total_line_count", "total_piping_lines", "total_lines", "total",
+        ])
+        if count == 0:
+            l_list = _deep_find_list(r, ["piping_lines", "lines"])
+            if l_list:
+                count = len(l_list)
+        stats["piping_lines"] = count
+
+    # ── Notes (Phase 3) ──
     if "phase3_notes_extraction" in phases:
         r = phases["phase3_notes_extraction"].get("result", {})
-        if isinstance(r, list):
-            stats["notes"] = len(r)
-        elif isinstance(r, dict):
-            stats["notes"] = len(r.get("notes", []))
+        count = _deep_find_int(r, ["total_notes_count", "total_notes", "total"])
+        if count == 0:
+            n_list = _deep_find_list(r, ["notes"])
+            if n_list:
+                count = len(n_list)
+        stats["notes"] = count
+
+    # ── Safety (Phase 9) ──
+    if "phase9_safety_analysis" in phases:
+        r = phases["phase9_safety_analysis"].get("result", {})
+        stats["gas_detectors"] = _deep_find_int(r, [
+            "total_gas_detectors",
+        ])
+        if stats["gas_detectors"] == 0:
+            gd_list = _deep_find_list(r, ["gas_detectors"])
+            if gd_list:
+                stats["gas_detectors"] = len(gd_list)
+
+        stats["relief_devices"] = _deep_find_int(r, ["total_relief_devices"])
+        if stats["relief_devices"] == 0:
+            rd_list = _deep_find_list(r, ["relief_devices"])
+            if rd_list:
+                stats["relief_devices"] = len(rd_list)
+
+        stats["esd_valves"] = _deep_find_int(r, ["total_esd_valves"])
+
+    # ── Use Phase 10 verified counts as override if available ──
+    if "phase10_verification_summary" in phases:
+        r10 = phases["phase10_verification_summary"].get("result", {})
+        verified = r10.get("verified_counts", r10)
+
+        for stat_key, search_keys in [
+            ("equipment", ["total_equipment"]),
+            ("valves", ["total_valves"]),
+            ("instruments", ["total_instruments"]),
+            ("piping_lines", ["total_piping_lines"]),
+            ("notes", ["total_notes"]),
+        ]:
+            v = _deep_find_int(verified, search_keys)
+            if v > 0:
+                stats[stat_key] = v
 
     return stats
 
 
 @app.get("/api/status/{session_id}")
 async def get_status(session_id: str):
-    """Get analysis status and progress."""
-
     if session_id not in ANALYSIS_SESSIONS:
         raise HTTPException(status_code=404, detail="Session not found")
 
@@ -256,8 +384,6 @@ async def get_status(session_id: str):
 
 @app.get("/api/results/{session_id}")
 async def get_results(session_id: str):
-    """Get analysis results."""
-
     if session_id not in ANALYSIS_SESSIONS:
         raise HTTPException(status_code=404, detail="Session not found")
 
@@ -271,8 +397,6 @@ async def get_results(session_id: str):
 
 @app.post("/api/query")
 async def query_pid(request: QueryRequest):
-    """Ask a question about the analyzed P&ID."""
-
     if request.session_id not in ANALYSIS_SESSIONS:
         raise HTTPException(status_code=404, detail="Session not found")
 
@@ -281,24 +405,32 @@ async def query_pid(request: QueryRequest):
     if session["analysis_results"] is None:
         raise HTTPException(status_code=400, detail="Complete analysis first")
 
-    # Build context from analysis results (truncate to avoid token limits)
-    analysis_summary = json.dumps(session["analysis_results"]["phases"], indent=2)
-    if len(analysis_summary) > 60000:
-        analysis_summary = analysis_summary[:60000] + "\n... (truncated)"
+    # Build a focused context from the parsed results (not raw text)
+    phase_summaries = {}
+    for phase_key, phase_data in session["analysis_results"]["phases"].items():
+        phase_summaries[phase_key] = phase_data.get("result", {})
 
-    prompt = f"""You are a SENIOR P&ID ENGINEER.
+    context_json = json.dumps(phase_summaries, indent=2)
+    if len(context_json) > 80000:
+        context_json = context_json[:80000] + "\n... (truncated)"
 
-ANALYZED DATA FROM THIS P&ID:
-{analysis_summary}
+    prompt = f"""You are a SENIOR P&ID ENGINEER answering questions about an analyzed P&ID drawing.
 
-ENGINEERING KNOWLEDGE:
+COMPLETE ANALYSIS DATA:
+{context_json}
+
+ENGINEERING KNOWLEDGE BASE:
 {json.dumps(PID_ENGINEERING_KNOWLEDGE, indent=2)}
 
 USER QUESTION: {request.question}
 
-Provide an expert engineering answer with specific tag numbers and values.
-If counting items, list each one.
-If explaining symbols, reference ISA-5.1 standards."""
+INSTRUCTIONS:
+- Provide a precise, expert-level engineering answer
+- Reference specific tag numbers, line numbers, and values from the analysis data
+- If counting items, list each one individually
+- If explaining instrument tags, decode using ISA-5.1
+- If the information is not in the analysis data, say so and explain what would be needed
+- Format your answer clearly with sections if needed"""
 
     try:
         response = await gemini_service.analyze_image(
@@ -319,8 +451,6 @@ If explaining symbols, reference ISA-5.1 standards."""
 
 @app.get("/api/export/{session_id}")
 async def export_results(session_id: str):
-    """Export analysis results as JSON file."""
-
     if session_id not in ANALYSIS_SESSIONS:
         raise HTTPException(status_code=404, detail="Session not found")
 

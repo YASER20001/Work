@@ -10,14 +10,14 @@
     <header>
         <div class="header-inner">
             <h1>P&amp;ID Vision Analyzer</h1>
-            <p class="subtitle">11-Phase Expert Analysis powered by Gemini Vision AI</p>
+            <p class="subtitle">11-Phase Expert Analysis powered by Gemini 2.5 Flash Vision AI</p>
         </div>
     </header>
 
     <main>
         <!-- Upload Section -->
         <section id="upload-section" class="card">
-            <h2>Upload P&amp;ID</h2>
+            <h2>Upload P&amp;ID Drawing</h2>
             <div id="drop-zone" class="drop-zone">
                 <div class="drop-zone-content">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -26,7 +26,7 @@
                         <line x1="12" y1="3" x2="12" y2="15"/>
                     </svg>
                     <p>Drag &amp; drop your P&amp;ID file here</p>
-                    <p class="hint">PDF, PNG, JPG, or WEBP</p>
+                    <p class="hint">PDF, PNG, JPG, or WEBP &mdash; 300 DPI rendering for PDFs</p>
                     <button id="browse-btn" class="btn btn-secondary">Browse Files</button>
                 </div>
                 <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.webp" hidden>
@@ -46,17 +46,17 @@
             </div>
             <p id="progress-text" class="progress-text">Initializing...</p>
             <div id="phase-list" class="phase-list">
-                <div class="phase-item" data-phase="1"><span class="phase-dot"></span>Phase 1: Document Context</div>
-                <div class="phase-item" data-phase="2"><span class="phase-dot"></span>Phase 2: Legend &amp; Symbols</div>
-                <div class="phase-item" data-phase="3"><span class="phase-dot"></span>Phase 3: Notes Extraction</div>
-                <div class="phase-item" data-phase="4"><span class="phase-dot"></span>Phase 4: Equipment Scan</div>
-                <div class="phase-item" data-phase="5"><span class="phase-dot"></span>Phase 5: Valve Analysis</div>
-                <div class="phase-item" data-phase="6"><span class="phase-dot"></span>Phase 6: Instrumentation</div>
-                <div class="phase-item" data-phase="7"><span class="phase-dot"></span>Phase 7: Piping Analysis</div>
-                <div class="phase-item" data-phase="8"><span class="phase-dot"></span>Phase 8: Connections &amp; Flow</div>
-                <div class="phase-item" data-phase="9"><span class="phase-dot"></span>Phase 9: Safety Analysis</div>
-                <div class="phase-item" data-phase="10"><span class="phase-dot"></span>Phase 10: Verification Summary</div>
-                <div class="phase-item" data-phase="11"><span class="phase-dot"></span>Phase 11: Re-verification</div>
+                <div class="phase-item" data-phase="1"><span class="phase-dot"></span><span class="phase-label">Phase 1: Document Context</span></div>
+                <div class="phase-item" data-phase="2"><span class="phase-dot"></span><span class="phase-label">Phase 2: Legend &amp; Symbols</span></div>
+                <div class="phase-item" data-phase="3"><span class="phase-dot"></span><span class="phase-label">Phase 3: Notes Extraction</span></div>
+                <div class="phase-item" data-phase="4"><span class="phase-dot"></span><span class="phase-label">Phase 4: Equipment Scan</span></div>
+                <div class="phase-item" data-phase="5"><span class="phase-dot"></span><span class="phase-label">Phase 5: Valve Analysis</span></div>
+                <div class="phase-item" data-phase="6"><span class="phase-dot"></span><span class="phase-label">Phase 6: Instrumentation</span></div>
+                <div class="phase-item" data-phase="7"><span class="phase-dot"></span><span class="phase-label">Phase 7: Piping Analysis</span></div>
+                <div class="phase-item" data-phase="8"><span class="phase-dot"></span><span class="phase-label">Phase 8: Connections &amp; Flow</span></div>
+                <div class="phase-item" data-phase="9"><span class="phase-dot"></span><span class="phase-label">Phase 9: Safety Analysis</span></div>
+                <div class="phase-item" data-phase="10"><span class="phase-dot"></span><span class="phase-label">Phase 10: Verification Summary</span></div>
+                <div class="phase-item" data-phase="11"><span class="phase-dot"></span><span class="phase-label">Phase 11: Re-verification</span></div>
             </div>
         </section>
 
@@ -85,26 +85,52 @@
                     <div class="stat-label">Notes</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-value" id="stat-gas-detectors">0</div>
+                    <div class="stat-label">Gas Detectors</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-relief">0</div>
+                    <div class="stat-label">Relief Devices</div>
+                </div>
+                <div class="stat-card">
                     <div class="stat-value" id="stat-confidence">0%</div>
                     <div class="stat-label">Confidence</div>
                 </div>
             </div>
-            <button id="export-btn" class="btn btn-secondary">Export JSON</button>
+            <div class="stats-actions">
+                <button id="export-btn" class="btn btn-secondary">Export JSON</button>
+            </div>
         </section>
 
         <!-- Results Section -->
         <section id="results-section" class="card hidden">
             <h2>Detailed Results</h2>
-            <div id="results-accordion" class="accordion"></div>
+            <div class="results-tabs">
+                <button class="tab-btn active" data-tab="structured">Structured View</button>
+                <button class="tab-btn" data-tab="raw">Raw AI Output</button>
+            </div>
+            <div id="results-structured" class="tab-content active">
+                <div id="results-accordion" class="accordion"></div>
+            </div>
+            <div id="results-raw" class="tab-content">
+                <div id="results-raw-accordion" class="accordion"></div>
+            </div>
         </section>
 
         <!-- Chat Section -->
         <section id="chat-section" class="card hidden">
             <h2>Ask About This P&amp;ID</h2>
+            <div class="chat-suggestions">
+                <button class="suggestion-btn" data-q="How many control valves are there? List each one.">Count control valves</button>
+                <button class="suggestion-btn" data-q="What is the main process flow path through this P&ID?">Main flow path</button>
+                <button class="suggestion-btn" data-q="List all safety relief valves with set pressures and discharge destinations.">Relief valves</button>
+                <button class="suggestion-btn" data-q="What are the design conditions (pressure, temperature, MAOP)?">Design conditions</button>
+                <button class="suggestion-btn" data-q="Decode all instrument tags and explain what each measures.">Decode instruments</button>
+            </div>
             <div id="chat-messages" class="chat-messages"></div>
             <form id="chat-form" class="chat-form">
-                <input type="text" id="chat-input" placeholder="e.g. How many control valves are there?" autocomplete="off">
-                <button type="submit" class="btn btn-primary">Ask</button>
+                <input type="text" id="chat-input" placeholder="Ask any engineering question about this P&amp;ID..." autocomplete="off">
+                <button type="submit" class="btn btn-primary" id="chat-submit-btn">Ask</button>
             </form>
         </section>
     </main>
