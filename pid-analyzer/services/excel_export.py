@@ -291,85 +291,56 @@ def generate_valve_list(analysis_results: dict) -> io.BytesIO:
     phases = analysis_results.get("phases", {})
     p1 = phases.get("phase1_document_context", {}).get("result", {})
     p5 = phases.get("phase5_valve_analysis", {}).get("result", {})
-    p7 = phases.get("phase7_piping_analysis", {}).get("result", {})
 
     title_block = _deep_find(p1, ["title_block"]) or {}
     design_data = _deep_find(p1, ["design_data"]) or {}
     valve_list = _get_list(p5, ["valves"])
-    piping_lines = _get_list(p7, ["piping_lines"])
 
-    # Build line lookup for pressure/temp info
-    line_lookup = {}
-    for line in piping_lines:
-        ln = _safe_get(line, "line_number", "")
-        if ln:
-            line_lookup[ln] = line
-
-    # Column widths
-    col_widths = [5, 8, 6, 6, 5, 5, 8, 6, 6, 6, 6, 18, 22, 18, 16, 16]
+    # Column widths: A-L (12 columns)
+    col_widths = [6, 20, 12, 12, 10, 18, 24, 20, 18, 12, 12, 18]
     for i, w in enumerate(col_widths, 1):
         ws.column_dimensions[get_column_letter(i)].width = w
 
     # ── Row 1: Standard reference ──
-    ws.merge_cells("A1:P1")
+    ws.merge_cells("A1:L1")
     _set_cell(ws, 1, 1, "Saudi Aramco 2616-ENG (11/2010)", font=SMALL_FONT)
 
     # ── Row 2-3: Company title ──
-    ws.merge_cells("F2:L3")
-    _set_cell(ws, 2, 6, "SAUDI ARABIAN OIL COMPANY",
+    ws.merge_cells("A2:L3")
+    _set_cell(ws, 2, 1, "SAUDI ARABIAN OIL COMPANY",
               font=Font(name="Arial", bold=True, size=16), alignment=CENTER_ALIGN)
 
-    # ── Left sidebar: Revision info (rows 4-20, cols A-E) ──
-    sidebar_labels = [
-        (4, "REVISION DESCRIPTION"),
-        (8, "DATE"),
-        (10, "REV. NO."),
-        (12, "JOB ORDER/EWO NO."),
+    # ── Row 4: Project / document info ──
+    _set_cell(ws, 4, 1, "Project:", font=DATA_FONT_BOLD, fill=LIGHT_GRAY_FILL)
+    ws.merge_cells("B4:D4")
+    _set_cell(ws, 4, 2, _safe_get(title_block, "project_name", ""), font=DATA_FONT_BOLD)
+    _set_cell(ws, 4, 6, "Document No.:", font=DATA_FONT_BOLD, fill=LIGHT_GRAY_FILL)
+    _set_cell(ws, 4, 7, _safe_get(title_block, "drawing_number", ""), font=DATA_FONT_BOLD)
+    _set_cell(ws, 4, 9, "Rev:", font=DATA_FONT_BOLD, fill=LIGHT_GRAY_FILL)
+    _set_cell(ws, 4, 10, _safe_get(title_block, "revision", ""), font=DATA_FONT_BOLD)
+    _set_cell(ws, 4, 11, "Date:", font=DATA_FONT_BOLD, fill=LIGHT_GRAY_FILL)
+    _set_cell(ws, 4, 12, _safe_get(title_block, "date", ""), font=DATA_FONT_BOLD)
+
+    # ── Row 6-7: Column headers ──
+    headers = [
+        "NO.", "TAG NUMBER", "SIZE\nRATING", "VALVE\nTYPE",
+        "ACTUATOR", "REFERENCE P&ID", "SERVICE /\nLOCATION",
+        "UPSTREAM PRESSURE P1\nPRESSURE DROP \u0394P",
+        "TEMPERATURE", "NORMAL\nPOSITION", "FAIL\nPOSITION",
+        "REFERENCE\nVALVE DATASHEET"
     ]
-    for r, label in sidebar_labels:
-        _set_cell(ws, r, 1, label, font=Font(name="Arial", bold=True, size=7),
-                  alignment=Alignment(text_rotation=90, horizontal="center",
-                                      vertical="center", wrap_text=True))
 
-    _set_cell(ws, 8, 2, _safe_get(title_block, "date", ""), font=SMALL_FONT, alignment=CENTER_ALIGN)
-    _set_cell(ws, 10, 2, _safe_get(title_block, "revision", ""), font=SMALL_FONT, alignment=CENTER_ALIGN)
-    _set_cell(ws, 12, 2, _safe_get(title_block, "drawing_number", ""), font=SMALL_FONT, alignment=CENTER_ALIGN)
-
-    # ── Row 5-6: Column headers ──
-    # Header row
-    header_row = 5
-
-    # Single-column headers merged across 2 rows
-    single_cols = [6, 7, 10, 11, 16]
-    single_labels = ["NO.", "TAG NUMBER", "VALVE\nTYPE", "STROKE\nTIME (sec)", "TEMPERATURE"]
-    for ci, label in zip(single_cols, single_labels):
+    header_row = 6
+    for ci, h in enumerate(headers, 1):
         cl = get_column_letter(ci)
         ws.merge_cells(f"{cl}{header_row}:{cl}{header_row + 1}")
-        _set_cell(ws, header_row, ci, label, font=HEADER_FONT,
+        _set_cell(ws, header_row, ci, h, font=HEADER_FONT,
                   fill=DARK_BLUE_FILL, alignment=CENTER_ALIGN, border=MEDIUM_BORDER)
 
-    # SIZE RATING spans H-I, rows 5-6
-    ws.merge_cells(f"H{header_row}:I{header_row + 1}")
-    _set_cell(ws, header_row, 8, "SIZE\nRATING", font=HEADER_FONT,
-              fill=DARK_BLUE_FILL, alignment=CENTER_ALIGN, border=MEDIUM_BORDER)
-
-    # REFERENCE P&ID spans L-M row 5, SERVICE spans L-M row 6
-    ws.merge_cells(f"L{header_row}:M{header_row}")
-    _set_cell(ws, header_row, 12, "REFERENCE P&ID", font=HEADER_FONT,
-              fill=DARK_BLUE_FILL, alignment=CENTER_ALIGN, border=MEDIUM_BORDER)
-    ws.merge_cells(f"L{header_row + 1}:M{header_row + 1}")
-    _set_cell(ws, header_row + 1, 12, "SERVICE", font=HEADER_FONT,
-              fill=DARK_BLUE_FILL, alignment=CENTER_ALIGN, border=MEDIUM_BORDER)
-
-    # UPSTREAM PRESSURE spans N-O, rows 5-6
-    ws.merge_cells(f"N{header_row}:O{header_row + 1}")
-    _set_cell(ws, header_row, 14, "UPSTREAM PRESSURE P1\nPRESSURE DROP ΔP",
-              font=HEADER_FONT, fill=DARK_BLUE_FILL, alignment=CENTER_ALIGN, border=MEDIUM_BORDER)
-
-    # ── Valve data rows (2 rows per valve: P&ID ref + Service) ──
-    data_start = 7
+    # ── Valve data rows ──
+    data_start = 8
     for idx, valve in enumerate(valve_list):
-        r = data_start + (idx * 2)
+        r = data_start + idx
         tag = _safe_get(valve, "tag_number", "")
         v_type = _safe_get(valve, "valve_type", "")
         size = _safe_get(valve, "size", "")
@@ -377,61 +348,44 @@ def generate_valve_list(analysis_results: dict) -> io.BytesIO:
         location = _safe_get(valve, "location_description", "")
         fail_pos = _safe_get(valve, "fail_position", "")
         normal_pos = _safe_get(valve, "normal_position", "")
+        actuator = _safe_get(valve, "actuator_type", "")
 
         # Get pressure/temp from design data
         pressure = _safe_get(design_data, "design_pressure", "")
         temperature = _safe_get(design_data, "design_temperature", "")
         pid_ref = _safe_get(title_block, "drawing_number", "")
 
-        # Row 1: P&ID reference
-        _set_cell(ws, r, 6, idx + 1, font=DATA_FONT, alignment=CENTER_ALIGN)
-        ws.merge_cells(f"F{r}:F{r + 1}")
-        _set_cell(ws, r, 7, tag, font=DATA_FONT_BOLD, alignment=CENTER_ALIGN)
-        ws.merge_cells(f"G{r}:G{r + 1}")
-
-        ws.merge_cells(f"H{r}:I{r}")
-        _set_cell(ws, r, 8, size, font=DATA_FONT, alignment=CENTER_ALIGN)
-
-        _set_cell(ws, r, 10, v_type.upper(), font=DATA_FONT, alignment=CENTER_ALIGN)
-        ws.merge_cells(f"J{r}:J{r + 1}")
-
-        stroke = ""
-        if "control" in v_type.lower():
-            stroke = "120"
-        elif "mov" in tag.lower():
-            stroke = "120"
-        _set_cell(ws, r, 11, stroke, font=DATA_FONT, alignment=CENTER_ALIGN)
-        ws.merge_cells(f"K{r}:K{r + 1}")
-
-        # P&ID ref + Service
-        ws.merge_cells(f"L{r}:M{r}")
-        _set_cell(ws, r, 12, pid_ref, font=DATA_FONT)
-        ws.merge_cells(f"L{r + 1}:M{r + 1}")
         service_desc = location if location else line_no
-        _set_cell(ws, r + 1, 12, service_desc, font=DATA_FONT)
+        pressure_str = f"P1: {pressure}" if pressure else ""
+        temp_str = temperature if temperature else ""
 
-        # Pressure
-        ws.merge_cells(f"N{r}:O{r}")
-        if pressure:
-            _set_cell(ws, r, 14, f"P1: {pressure}", font=DATA_FONT)
-        ws.merge_cells(f"N{r + 1}:O{r + 1}")
-        if pressure:
-            _set_cell(ws, r + 1, 14, f"ΔP: {pressure}", font=DATA_FONT)
-
-        # Temperature
-        if temperature:
-            _set_cell(ws, r, 16, f"OPR: {temperature}", font=DATA_FONT)
-            _set_cell(ws, r + 1, 16, f"DESIGN: {temperature}", font=DATA_FONT)
+        _set_cell(ws, r, 1, idx + 1, font=DATA_FONT, alignment=CENTER_ALIGN)
+        _set_cell(ws, r, 2, tag, font=DATA_FONT_BOLD)
+        _set_cell(ws, r, 3, size, font=DATA_FONT, alignment=CENTER_ALIGN)
+        _set_cell(ws, r, 4, v_type.upper(), font=DATA_FONT, alignment=CENTER_ALIGN)
+        _set_cell(ws, r, 5, actuator, font=DATA_FONT, alignment=CENTER_ALIGN)
+        _set_cell(ws, r, 6, pid_ref, font=DATA_FONT)
+        _set_cell(ws, r, 7, service_desc, font=DATA_FONT)
+        _set_cell(ws, r, 8, pressure_str, font=DATA_FONT)
+        _set_cell(ws, r, 9, temp_str, font=DATA_FONT)
+        _set_cell(ws, r, 10, normal_pos, font=DATA_FONT, alignment=CENTER_ALIGN)
+        _set_cell(ws, r, 11, fail_pos, font=DATA_FONT, alignment=CENTER_ALIGN)
+        _set_cell(ws, r, 12, "", font=DATA_FONT)  # Reference datasheet
 
         # Alternate shading
         if idx % 2 == 1:
-            for ci in range(6, 17):
+            for ci in range(1, 13):
                 ws.cell(row=r, column=ci).fill = LIGHT_GRAY_FILL
-                ws.cell(row=r + 1, column=ci).fill = LIGHT_GRAY_FILL
+
+    # ── Summary row ──
+    summary_row = data_start + max(len(valve_list), 1) + 1
+    ws.merge_cells(f"A{summary_row}:B{summary_row}")
+    _set_cell(ws, summary_row, 1, f"Total Valves: {len(valve_list)}",
+              font=DATA_FONT_BOLD, fill=LIGHT_BLUE_FILL, alignment=LEFT_ALIGN, border=MEDIUM_BORDER)
 
     # ── Disclaimer text ──
-    disclaimer_row = data_start + max(len(valve_list) * 2, 2) + 2
-    ws.merge_cells(f"A{disclaimer_row}:P{disclaimer_row}")
+    disclaimer_row = summary_row + 2
+    ws.merge_cells(f"A{disclaimer_row}:L{disclaimer_row}")
     _set_cell(ws, disclaimer_row, 1,
               "THIS REVISION IS NOT TO BE USED FOR CONSTRUCTION UNTIL CERTIFIED AND DATED",
               font=Font(name="Arial", size=7, italic=True))
@@ -445,6 +399,19 @@ def generate_valve_list(analysis_results: dict) -> io.BytesIO:
     wb.save(output)
     output.seek(0)
     return output
+
+
+def _stringify_list(items):
+    """Convert a list of mixed str/dict items into a joined string."""
+    if not isinstance(items, list):
+        return str(items) if items else ""
+    parts = []
+    for item in items:
+        if isinstance(item, dict):
+            parts.append(", ".join(str(v) for v in item.values() if v))
+        else:
+            parts.append(str(item))
+    return ", ".join(parts)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -539,11 +506,11 @@ def generate_line_list(analysis_results: dict) -> io.BytesIO:
 
         # Special items
         specials = _safe_get(line, "special_items", [])
-        special_str = ", ".join(specials) if isinstance(specials, list) else str(specials)
+        special_str = _stringify_list(specials)
 
         # Connection to other P&IDs
         connections = _safe_get(line, "connections_to_other_pids", [])
-        conn_str = ", ".join(connections) if isinstance(connections, list) else str(connections)
+        conn_str = _stringify_list(connections)
 
         pid_ref = _safe_get(title_block, "drawing_number", "")
 
