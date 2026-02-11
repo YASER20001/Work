@@ -19,8 +19,7 @@
 
   // ── Exposed global function called by app.js after results load ──
   window.renderDashboard = function (data) {
-    var section = document.getElementById("dashboard-section");
-    section.classList.remove("hidden");
+    // Dashboard is now a separate page — no need to unhide
 
     populateHeader(data);
     populateKPIs(data);

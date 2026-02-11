@@ -1,24 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="400" height="100">
-  <!-- Globe arc -->
-  <ellipse cx="52" cy="50" rx="42" ry="42" fill="none" stroke="#1a5091" stroke-width="3.5"/>
-  <path d="M 18 18 Q 52 35 86 18" fill="none" stroke="#1a5091" stroke-width="2.5"/>
-  <path d="M 10 50 Q 52 65 94 50" fill="none" stroke="#1a5091" stroke-width="2"/>
-  <!-- Sun rays -->
-  <circle cx="30" cy="12" r="5" fill="#f5c518"/>
-  <line x1="30" y1="2" x2="30" y2="5" stroke="#f5c518" stroke-width="2"/>
-  <line x1="21" y1="5" x2="23" y2="8" stroke="#f5c518" stroke-width="2"/>
-  <line x1="20" y1="14" x2="23" y2="13" stroke="#f5c518" stroke-width="2"/>
-  <line x1="37" y1="4" x2="35" y2="7" stroke="#f5c518" stroke-width="2"/>
-  <line x1="39" y1="12" x2="36" y2="12" stroke="#f5c518" stroke-width="2"/>
-  <!-- Digital squares -->
-  <rect x="50" y="14" width="7" height="7" fill="#1a3c34" rx="1"/>
-  <rect x="60" y="10" width="6" height="6" fill="#4a8c5c" rx="1"/>
-  <rect x="59" y="19" width="5" height="5" fill="#7cb89c" rx="1"/>
-  <rect x="68" y="15" width="5" height="5" fill="#a8d4bc" rx="1"/>
-  <!-- KBR text -->
-  <text x="72" y="72" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="52" fill="#003a70" letter-spacing="-1">KBR</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 110">
+  <!-- Globe arc with swooping blue lines -->
+  <ellipse cx="52" cy="55" rx="42" ry="42" fill="none" stroke="#1a5091" stroke-width="3.5"/>
+  <path d="M 18 23 Q 52 40 86 23" fill="none" stroke="#1a5091" stroke-width="2.5"/>
+  <path d="M 10 55 Q 52 70 94 55" fill="none" stroke="#1a5091" stroke-width="2"/>
+
+  <!-- Yellow sun burst at top-left -->
+  <circle cx="30" cy="17" r="5" fill="#f5c518"/>
+  <line x1="30" y1="7" x2="30" y2="10" stroke="#f5c518" stroke-width="2"/>
+  <line x1="21" y1="10" x2="23" y2="13" stroke="#f5c518" stroke-width="2"/>
+  <line x1="20" y1="19" x2="23" y2="18" stroke="#f5c518" stroke-width="2"/>
+  <line x1="37" y1="9" x2="35" y2="12" stroke="#f5c518" stroke-width="2"/>
+  <line x1="39" y1="17" x2="36" y2="17" stroke="#f5c518" stroke-width="2"/>
+
+  <!-- Colored squares near globe (dark green, light green, gray tones) -->
+  <rect x="50" y="19" width="7" height="7" fill="#1a3c34" rx="1"/>
+  <rect x="60" y="15" width="6" height="6" fill="#4a8c5c" rx="1"/>
+  <rect x="59" y="24" width="5" height="5" fill="#7cb89c" rx="1"/>
+  <rect x="68" y="20" width="5" height="5" fill="#a8a8a8" rx="1"/>
+
+  <!-- KBR in bold dark navy -->
+  <text x="110" y="75" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="52" fill="#003a70" letter-spacing="-1">KBR</text>
+
   <!-- Dash -->
-  <text x="208" y="72" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="52" fill="#003a70">-</text>
-  <!-- AMCDE text -->
-  <text x="232" y="72" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="46" fill="#1a5091" letter-spacing="0">AMCDE</text>
+  <text x="246" y="75" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="52" fill="#003a70">-</text>
+
+  <!-- AMCDE in medium blue -->
+  <text x="270" y="75" font-family="Arial, sans-serif" font-weight="700" font-size="48" fill="#1a5091" letter-spacing="1">AMCDE</text>
 </svg>

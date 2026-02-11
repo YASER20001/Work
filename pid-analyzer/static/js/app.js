@@ -1,5 +1,6 @@
 /**
- * P&ID Vision Analyzer - Frontend Application
+ * P&ID Vision Analyzer — SPA Frontend Application
+ * KBR-AMCDE Corporate Layout with Sidebar Navigation
  */
 
 (function () {
@@ -7,30 +8,17 @@
 
   var sessionId = null;
   var pollInterval = null;
+  var analysisComplete = false;
 
-  // Elements
-  var dropZone = document.getElementById("drop-zone");
-  var fileInput = document.getElementById("file-input");
-  var browseBtn = document.getElementById("browse-btn");
-  var fileInfo = document.getElementById("file-info");
-  var fileName = document.getElementById("file-name");
-  var removeFile = document.getElementById("remove-file");
-  var analyzeBtn = document.getElementById("analyze-btn");
-  var progressSection = document.getElementById("progress-section");
-  var progressBar = document.getElementById("progress-bar");
-  var progressText = document.getElementById("progress-text");
-  var phaseItems = document.querySelectorAll(".phase-item");
-  var statsSection = document.getElementById("stats-section");
-  var resultsSection = document.getElementById("results-section");
-  var resultsAccordion = document.getElementById("results-accordion");
-  var resultsRawAccordion = document.getElementById("results-raw-accordion");
-  var exportBtn = document.getElementById("export-btn");
-  var chatSection = document.getElementById("chat-section");
-  var chatForm = document.getElementById("chat-form");
-  var chatInput = document.getElementById("chat-input");
-  var chatMessages = document.getElementById("chat-messages");
-  var chatSubmitBtn = document.getElementById("chat-submit-btn");
+  // ═══ PAGE TITLES ═══
+  var PAGE_TITLES = {
+    upload: "Upload & Analyze",
+    dashboard: "Executive Dashboard",
+    results: "Detailed Results",
+    assistant: "AI Engineering Assistant",
+  };
 
+  // ═══ PHASE LABELS ═══
   var PHASE_LABELS = {
     phase1_document_context: "Document Context",
     phase2_legend_symbols: "Legend & Symbols",
@@ -45,24 +33,106 @@
     phase11_reverification: "Re-verification",
   };
 
-  // ── Upload ──
+  // ═══ SIDEBAR NAVIGATION ═══
+
+  var sidebar = document.getElementById("sidebar");
+  var mainWrapper = document.getElementById("main-wrapper");
+  var sidebarToggle = document.getElementById("sidebar-toggle");
+  var navItems = document.querySelectorAll(".nav-item");
+  var pages = document.querySelectorAll(".page");
+  var topbarTitle = document.getElementById("topbar-title");
+  var topbarStatus = document.getElementById("topbar-status");
+
+  sidebarToggle.addEventListener("click", function () {
+    sidebar.classList.toggle("collapsed");
+    mainWrapper.classList.toggle("expanded");
+    // On mobile, toggle open class
+    if (window.innerWidth <= 1024) {
+      sidebar.classList.toggle("open");
+    }
+  });
+
+  // Close sidebar on mobile when clicking outside
+  mainWrapper.addEventListener("click", function () {
+    if (window.innerWidth <= 1024 && sidebar.classList.contains("open")) {
+      sidebar.classList.remove("open");
+    }
+  });
+
+  function navigateTo(pageName) {
+    pages.forEach(function (p) { p.classList.remove("active"); });
+    navItems.forEach(function (n) { n.classList.remove("active"); });
+
+    var page = document.getElementById("page-" + pageName);
+    if (page) page.classList.add("active");
+
+    var nav = document.querySelector('.nav-item[data-page="' + pageName + '"]');
+    if (nav) nav.classList.add("active");
+
+    topbarTitle.textContent = PAGE_TITLES[pageName] || pageName;
+
+    // Close sidebar on mobile after navigation
+    if (window.innerWidth <= 1024) {
+      sidebar.classList.remove("open");
+    }
+  }
+
+  navItems.forEach(function (item) {
+    item.addEventListener("click", function (e) {
+      e.preventDefault();
+      var page = item.getAttribute("data-page");
+      if (item.classList.contains("disabled") && !item.classList.contains("enabled")) return;
+      navigateTo(page);
+    });
+  });
+
+  function enableResultPages() {
+    document.getElementById("nav-dashboard").classList.add("enabled");
+    document.getElementById("nav-results").classList.add("enabled");
+    document.getElementById("nav-assistant").classList.add("enabled");
+  }
+
+  // ═══ UPLOAD ═══
+
+  var dropZone = document.getElementById("drop-zone");
+  var fileInput = document.getElementById("file-input");
+  var browseBtn = document.getElementById("browse-btn");
+  var fileInfo = document.getElementById("file-info");
+  var fileName = document.getElementById("file-name");
+  var removeFile = document.getElementById("remove-file");
+  var analyzeBtn = document.getElementById("analyze-btn");
+  var progressCard = document.getElementById("progress-card");
+  var progressBar = document.getElementById("progress-bar");
+  var progressText = document.getElementById("progress-text");
+  var progressPct = document.getElementById("progress-pct");
+  var phaseItems = document.querySelectorAll(".phase-item");
 
   browseBtn.addEventListener("click", function (e) {
     e.stopPropagation();
     fileInput.click();
   });
+
   dropZone.addEventListener("click", function () { fileInput.click(); });
+
   dropZone.addEventListener("dragover", function (e) {
-    e.preventDefault(); dropZone.classList.add("dragover");
+    e.preventDefault();
+    dropZone.classList.add("dragover");
   });
-  dropZone.addEventListener("dragleave", function () { dropZone.classList.remove("dragover"); });
+
+  dropZone.addEventListener("dragleave", function () {
+    dropZone.classList.remove("dragover");
+  });
+
   dropZone.addEventListener("drop", function (e) {
-    e.preventDefault(); dropZone.classList.remove("dragover");
+    e.preventDefault();
+    dropZone.classList.remove("dragover");
     if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
   });
+
   fileInput.addEventListener("change", function () {
     if (fileInput.files.length) handleFile(fileInput.files[0]);
   });
+
   removeFile.addEventListener("click", resetUpload);
 
   function handleFile(file) {
@@ -88,7 +158,7 @@
 
   async function uploadFile(file) {
     analyzeBtn.disabled = true;
-    analyzeBtn.textContent = "Uploading...";
+    analyzeBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Uploading...';
     var formData = new FormData();
     formData.append("file", file);
     try {
@@ -97,14 +167,14 @@
       if (!res.ok) throw new Error(data.detail || "Upload failed");
       sessionId = data.session_id;
       analyzeBtn.disabled = false;
-      analyzeBtn.textContent = "Start 11-Phase Analysis";
+      analyzeBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Start 11-Phase Analysis';
     } catch (err) {
       alert("Upload error: " + err.message);
       resetUpload();
     }
   }
 
-  // ── Analysis ──
+  // ═══ ANALYSIS ═══
 
   analyzeBtn.addEventListener("click", function () {
     if (!sessionId) return;
@@ -113,8 +183,11 @@
 
   async function startAnalysis() {
     analyzeBtn.disabled = true;
-    analyzeBtn.textContent = "Analysis Running...";
-    progressSection.classList.remove("hidden");
+    analyzeBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Analysis Running...';
+    progressCard.classList.remove("hidden");
+    topbarStatus.textContent = "Analyzing";
+    topbarStatus.className = "topbar-badge analyzing";
+
     try {
       var res = await fetch("/api/analyze/" + sessionId, { method: "POST" });
       var data = await res.json();
@@ -123,7 +196,9 @@
     } catch (err) {
       alert("Analysis error: " + err.message);
       analyzeBtn.disabled = false;
-      analyzeBtn.textContent = "Start 11-Phase Analysis";
+      analyzeBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Start 11-Phase Analysis';
+      topbarStatus.textContent = "Ready";
+      topbarStatus.className = "topbar-badge";
     }
   }
 
@@ -136,9 +211,11 @@
         var total = data.progress.total_phases;
         var pct = Math.round((current / total) * 100);
         progressBar.style.width = pct + "%";
+        progressPct.textContent = pct + "%";
         var phaseName = data.progress.phase_name || "";
         var label = PHASE_LABELS[phaseName] || phaseName;
         progressText.textContent = "Phase " + current + " of " + total + ": " + label;
+
         phaseItems.forEach(function (item) {
           var phase = parseInt(item.getAttribute("data-phase"));
           item.classList.remove("active", "completed");
@@ -146,6 +223,7 @@
           else if (phase === current) item.classList.add("active");
         });
       }
+
       if (data.status === "completed") {
         clearInterval(pollInterval);
         pollInterval = null;
@@ -154,7 +232,12 @@
           item.classList.add("completed");
         });
         progressBar.style.width = "100%";
+        progressPct.textContent = "100%";
         progressText.textContent = "Analysis complete!";
+        topbarStatus.textContent = "Complete";
+        topbarStatus.className = "topbar-badge completed";
+        analysisComplete = true;
+        enableResultPages();
         loadResults();
       }
     } catch (err) { /* retry silently */ }
@@ -167,21 +250,21 @@
       displayStats(data);
       displayStructuredResults(data);
       displayRawResults(data);
-      statsSection.classList.remove("hidden");
-      resultsSection.classList.remove("hidden");
-      chatSection.classList.remove("hidden");
 
       // Wire executive dashboard
       window._pidSessionId = sessionId;
       if (typeof window.renderDashboard === "function") {
         window.renderDashboard(data);
       }
+
+      // Auto-navigate to dashboard after analysis
+      navigateTo("dashboard");
     } catch (err) {
       alert("Failed to load results: " + err.message);
     }
   }
 
-  // ── Stats ──
+  // ═══ STATS ═══
 
   function displayStats(data) {
     var s = data.statistics || {};
@@ -195,7 +278,10 @@
     document.getElementById("stat-confidence").textContent = (data.confidence || 0) + "%";
   }
 
-  // ── Structured Results ──
+  // ═══ STRUCTURED RESULTS ═══
+
+  var resultsAccordion = document.getElementById("results-accordion");
+  var resultsRawAccordion = document.getElementById("results-raw-accordion");
 
   function displayStructuredResults(data) {
     resultsAccordion.innerHTML = "";
@@ -204,9 +290,8 @@
     keys.forEach(function (key, idx) {
       var phase = phases[key];
       var label = PHASE_LABELS[key] || key;
-      var result = phase.result || {};
       var item = makeAccordionItem("Phase " + (idx + 1) + ": " + label, function (body) {
-        renderStructured(body, result, key);
+        renderStructured(body, phase.result || {}, key);
       });
       resultsAccordion.appendChild(item);
     });
@@ -259,8 +344,6 @@
       container.appendChild(pre);
       return;
     }
-
-    // Render key-value pairs at the top level
     var kvKeys = Object.keys(result);
     kvKeys.forEach(function (k) {
       var v = result[k];
@@ -282,13 +365,11 @@
     h.className = "result-section-title";
     h.textContent = formatKey(title);
     container.appendChild(h);
-
     Object.keys(obj).forEach(function (k) {
       var v = obj[k];
       if (Array.isArray(v) && v.length > 0 && typeof v[0] === "object") {
         renderArrayTable(container, k, v);
       } else if (typeof v === "object" && v !== null && !Array.isArray(v)) {
-        // Nested object — render as flat key-value
         Object.keys(v).forEach(function (kk) {
           var kv = document.createElement("div");
           kv.className = "result-kv";
@@ -310,20 +391,15 @@
     h.className = "result-section-title";
     h.textContent = formatKey(title) + " (" + arr.length + ")";
     container.appendChild(h);
-
     if (arr.length === 0) return;
-
     var table = document.createElement("table");
     table.className = "result-table";
-
-    // Collect all keys across all items
     var allKeys = [];
     arr.forEach(function (item) {
       Object.keys(item).forEach(function (k) {
         if (allKeys.indexOf(k) === -1) allKeys.push(k);
       });
     });
-
     var thead = document.createElement("thead");
     var headerRow = document.createElement("tr");
     allKeys.forEach(function (k) {
@@ -333,7 +409,6 @@
     });
     thead.appendChild(headerRow);
     table.appendChild(thead);
-
     var tbody = document.createElement("tbody");
     arr.forEach(function (item) {
       var row = document.createElement("tr");
@@ -353,9 +428,7 @@
   }
 
   function formatKey(key) {
-    return key
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+    return key.replace(/_/g, " ").replace(/\b\w/g, function (c) { return c.toUpperCase(); });
   }
 
   function escHtml(str) {
@@ -364,7 +437,7 @@
     return div.innerHTML;
   }
 
-  // ── Tabs ──
+  // ═══ TABS ═══
 
   document.querySelectorAll(".tab-btn").forEach(function (btn) {
     btn.addEventListener("click", function () {
@@ -376,14 +449,15 @@
     });
   });
 
-  // ── Export ──
+  // ═══ EXPORT ═══
 
+  var exportBtn = document.getElementById("export-btn");
   exportBtn.addEventListener("click", function () {
     if (!sessionId) return;
     window.open("/api/export/" + sessionId, "_blank");
   });
 
-  // ── Excel Downloads ──
+  // ═══ EXCEL DOWNLOADS ═══
 
   function downloadExcel(type) {
     if (!sessionId) return;
@@ -419,7 +493,12 @@
   var dlLl2 = document.getElementById("dl-line-list-2");
   if (dlLl2) dlLl2.addEventListener("click", function () { downloadExcel("line-list"); });
 
-  // ── Chat ──
+  // ═══ CHAT / AI ASSISTANT ═══
+
+  var chatForm = document.getElementById("chat-form");
+  var chatInput = document.getElementById("chat-input");
+  var chatMessages = document.getElementById("chat-messages");
+  var chatSubmitBtn = document.getElementById("chat-submit-btn");
 
   document.querySelectorAll(".suggestion-btn").forEach(function (btn) {
     btn.addEventListener("click", function () {
@@ -433,6 +512,10 @@
     e.preventDefault();
     var question = chatInput.value.trim();
     if (!question || !sessionId) return;
+
+    // Remove welcome message if present
+    var welcome = chatMessages.querySelector(".chat-welcome");
+    if (welcome) welcome.remove();
 
     addChatMessage(question, "user");
     chatInput.value = "";
