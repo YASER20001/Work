@@ -7,7 +7,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from starlette.requests import Request
 import uvicorn
 import os
@@ -22,6 +22,7 @@ from models.schemas import QueryRequest
 from services.gemini_vision import GeminiVisionService, EXPERT_ANALYSIS_PHASES
 from services.pdf_processor import PDFProcessor
 from services.pid_knowledge import PID_ENGINEERING_KNOWLEDGE
+from services.excel_export import generate_equipment_list, generate_valve_list, generate_line_list
 
 app = FastAPI(
     title="P&ID Vision Analyzer API",
@@ -464,6 +465,52 @@ async def export_results(session_id: str):
         headers={
             "Content-Disposition": f"attachment; filename=pid_analysis_{session_id}.json"
         },
+    )
+
+
+def _get_excel_session(session_id: str):
+    """Validate session and return analysis results for Excel export."""
+    if session_id not in ANALYSIS_SESSIONS:
+        raise HTTPException(status_code=404, detail="Session not found")
+    session = ANALYSIS_SESSIONS[session_id]
+    if session["analysis_results"] is None:
+        raise HTTPException(status_code=400, detail="Analysis not completed yet")
+    return session
+
+
+@app.get("/api/export/{session_id}/equipment-list")
+async def export_equipment_list(session_id: str):
+    session = _get_excel_session(session_id)
+    filename = f"Mechanical_Equipment_List_{session['filename'].rsplit('.', 1)[0]}.xlsx"
+    output = generate_equipment_list(session["analysis_results"])
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.get("/api/export/{session_id}/valve-list")
+async def export_valve_list(session_id: str):
+    session = _get_excel_session(session_id)
+    filename = f"Valve_List_{session['filename'].rsplit('.', 1)[0]}.xlsx"
+    output = generate_valve_list(session["analysis_results"])
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.get("/api/export/{session_id}/line-list")
+async def export_line_list(session_id: str):
+    session = _get_excel_session(session_id)
+    filename = f"Line_List_{session['filename'].rsplit('.', 1)[0]}.xlsx"
+    output = generate_line_list(session["analysis_results"])
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 

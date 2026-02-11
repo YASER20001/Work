@@ -383,6 +383,42 @@
     window.open("/api/export/" + sessionId, "_blank");
   });
 
+  // ── Excel Downloads ──
+
+  function downloadExcel(type) {
+    if (!sessionId) return;
+    window.open("/api/export/" + sessionId + "/" + type, "_blank");
+  }
+
+  // Dashboard dropdown toggle
+  var excelToggle = document.getElementById("db-excel-toggle");
+  var excelMenu = document.getElementById("db-excel-menu");
+  if (excelToggle) {
+    excelToggle.addEventListener("click", function (e) {
+      e.stopPropagation();
+      excelMenu.classList.toggle("open");
+    });
+    document.addEventListener("click", function () {
+      excelMenu.classList.remove("open");
+    });
+  }
+
+  // Dashboard Excel buttons
+  var dlEq = document.getElementById("dl-equipment-list");
+  if (dlEq) dlEq.addEventListener("click", function () { downloadExcel("equipment-list"); });
+  var dlVl = document.getElementById("dl-valve-list");
+  if (dlVl) dlVl.addEventListener("click", function () { downloadExcel("valve-list"); });
+  var dlLl = document.getElementById("dl-line-list");
+  if (dlLl) dlLl.addEventListener("click", function () { downloadExcel("line-list"); });
+
+  // Stats section Excel buttons
+  var dlEq2 = document.getElementById("dl-equipment-list-2");
+  if (dlEq2) dlEq2.addEventListener("click", function () { downloadExcel("equipment-list"); });
+  var dlVl2 = document.getElementById("dl-valve-list-2");
+  if (dlVl2) dlVl2.addEventListener("click", function () { downloadExcel("valve-list"); });
+  var dlLl2 = document.getElementById("dl-line-list-2");
+  if (dlLl2) dlLl2.addEventListener("click", function () { downloadExcel("line-list"); });
+
   // ── Chat ──
 
   document.querySelectorAll(".suggestion-btn").forEach(function (btn) {

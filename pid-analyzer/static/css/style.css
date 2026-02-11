@@ -76,6 +76,26 @@ main {
 .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
 .btn-secondary { background: var(--secondary); color: white; }
 .btn-secondary:hover { background: var(--secondary-hover); }
+.btn-excel { background: #217346; color: white; }
+.btn-excel:hover { background: #185c37; }
+.btn-excel svg { vertical-align: middle; margin-right: 4px; }
+
+/* Excel dropdown */
+.db-excel-dropdown { position: relative; display: inline-block; }
+.db-excel-menu {
+    display: none; position: absolute; right: 0; top: 100%; z-index: 100;
+    min-width: 260px; background: #fff; border-radius: 8px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.18); border: 1px solid #e2e8f0;
+    padding: 6px 0; margin-top: 4px;
+}
+.db-excel-menu.open { display: block; }
+.db-excel-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+    cursor: pointer; color: #1e293b; font-size: 13px; text-decoration: none;
+    transition: background .15s;
+}
+.db-excel-item:hover { background: #f0fdf4; color: #217346; }
+.db-excel-icon { font-size: 16px; width: 22px; text-align: center; }
 .btn-icon {
     background: none; border: none; font-size: 1.25rem;
     cursor: pointer; color: var(--text-muted); padding: 0.25rem;
