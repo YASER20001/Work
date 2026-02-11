@@ -6,15 +6,15 @@
 (function () {
   "use strict";
 
-  // Color palettes
+  // KBR-AMCDE color palettes
   var VALVE_COLORS = [
-    "#2563eb", "#4f46e5", "#7c3aed", "#0d9488",
-    "#d97706", "#dc2626", "#0284c7", "#059669",
-    "#7c2d12", "#475569", "#be185d"
+    "#003a70", "#1a5091", "#4a90d9", "#0d8a6a",
+    "#b45309", "#c52a2a", "#5b47b0", "#0d8a4a",
+    "#7c2d12", "#4a5568", "#c8a951"
   ];
   var INSTRUMENT_COLORS = [
-    "#0d9488", "#2563eb", "#d97706", "#7c3aed",
-    "#dc2626", "#475569"
+    "#003a70", "#1a5091", "#b45309", "#5b47b0",
+    "#c52a2a", "#4a5568"
   ];
 
   // ── Exposed global function called by app.js after results load ──
@@ -283,7 +283,7 @@
     ctx.stroke();
 
     // Value ring
-    var color = pct >= 80 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "#ef4444";
+    var color = pct >= 80 ? "#c8a951" : pct >= 50 ? "#4a90d9" : "#c52a2a";
     var endAngle = -Math.PI / 2 + (pct / 100) * Math.PI * 2;
     ctx.beginPath();
     ctx.arc(cx, cy, R, -Math.PI / 2, endAngle);
