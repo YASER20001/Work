@@ -76,7 +76,6 @@ body {
     width: 100%;
     max-width: 240px;
     flex-shrink: 0;
-    filter: brightness(0) invert(1);
     display: block;
     object-fit: contain;
     object-position: left center;
@@ -745,7 +744,7 @@ body {
     border-radius: 6px; display: flex; align-items: center;
 }
 
-.db-logo img { height: 38px; filter: brightness(0) invert(1); }
+.db-logo img { height: 38px; }
 
 .db-title-block h2 {
     font-size: 1rem; font-weight: 700; margin: 0; line-height: 1.3;
