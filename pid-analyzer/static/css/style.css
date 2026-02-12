@@ -63,7 +63,7 @@ body {
 .sidebar.collapsed { transform: translateX(calc(-1 * var(--sidebar-w))); }
 
 .sidebar-brand {
-    padding: 0.6rem 0.7rem;
+    padding: 0.8rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -71,10 +71,11 @@ body {
     background: #ffffff !important;
     border-radius: 6px;
     margin: 0.5rem;
+    overflow: visible;
 }
 
 .sidebar-logo {
-    height: 48px;
+    max-height: 80px;
     width: 100%;
     flex-shrink: 0;
     display: block;
@@ -741,11 +742,12 @@ body {
 .db-header-left { display: flex; align-items: center; gap: 1.25rem; }
 
 .db-logo {
-    background: #ffffff; padding: 0.4rem 0.6rem;
+    background: #ffffff; padding: 0.5rem 0.7rem;
     border-radius: 6px; display: flex; align-items: center;
+    overflow: visible;
 }
 
-.db-logo img { height: 38px; }
+.db-logo img { height: 55px; }
 
 .db-title-block h2 {
     font-size: 1rem; font-weight: 700; margin: 0; line-height: 1.3;
